@@ -1,0 +1,23 @@
+    <!DOCTYPE html>  
+    <html>  
+    <head>  
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />  
+    <title>Crtmpserver Video Demo</title>  
+    </head>  
+    <body>  
+    <script type='text/javascript' src='jwplayer.js'></script>  
+      
+    <div id='mediaspace'>Loading the JWPlayer...</div>  
+      
+    <script type='text/javascript'>  
+      var so = new SWFObject('player.flash.swf','mpl','1280','720','9');  
+      	alert("aaaaaaa");
+	  so.addParam('allowfullscreen','true');  
+      so.addParam('allowscriptaccess','always');  
+      so.addParam('wmode','opaque');  
+      so.addVariable('file','/Volumes/Storage/media/flv/test');  
+      so.addVariable('streamer','rtmp://168.160.111.26/flvplayback/');  
+      so.write('mediaspace');  
+    </script>  
+    </body>  
+    </html>  

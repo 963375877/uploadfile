@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<link rel="stylesheet" href="./dplayer/DPlayer.min.css">
+<div id="dplayer"></div>
+<script src="./tbsjs/jquery-2.0.3.min.js"></script>
+<script type="text/javascript" src="./player/sewise.player.min.js"></script>
+<script src="https://unpkg.com/hls.js@0.8.8/dist/hls.min.js"></script>
+<script src="./dplayer/DPlayer.min.js"></script>
+
+</head>
+<body onbeforeUnload="PlayStop()" onunload="PlayStop()">
+
+	<div id=“file-list-container”>
+		当前路径: <input name="path" type="text" id="file-path"
+			value="/home/tbs/TBSNative/test/"> <input type="button"
+			id="show-file" value="显示" onclick="show_file_list();"><br>
+
+		文件选项: <input name="flag" type="text" id="file-flag" value="0">
+		<hr>
+
+		<div>
+			<div class='encode-dir'>加密全部文件</div>
+			<div class='decode-dir'>解密全部文件</div>
+			<table border="1">
+				<tr>
+					<td>文件名</td>
+					<td>文件大小</td>
+					<td>修改日期</td>
+					<td>加密状态</td>
+					<td>操作</td>
+					<td>永久点播</td>					
+					<td>临时试看</td>
+					<td>删除缓存</td>
+					<td>弹幕视频</td>
+					<td>脚本添加LOGO</td>
+					<td>程序添加LOGO</td>
+					<td>视频分割</td>
+					<td>视频合并</td>
+					<td>图片截取</td>
+				</tr>
+				<tbody id="file-list"></tbody>
+			</table>
+		</div>
+		<div id="file-content" style="margin-top: 25px;"></div>
+	</div>
+
+	<script>
+  
+  //取元素中的值
+	 var filepath = $("#file-path").val();
+	 var fileflag = $("#file-flag").val();
+	 var url = "http://168.160.111.26/hls/"
+	 load_file_list(filepath, "");
+
+
+
+
+
+
+function show_file_list()
+{
+		 var filepath = $("#file-path").val();
+		// alert("filepath =" + filepath);
+ 		 load_file_list( filepath, "" );
+}
+
+function load_file_list( filepath, filename )
+{
+		$.get("/TBSVideoDeal.cgi",{
+   		 "method": "getFileList",
+   		 "filepath": filepath,
+       "filename": filename
+   	 	}, function ( data ){
+   	 	//	  alert("function ( data )");
+   			 show_list(data);
+		     }, "json");
+}
+
+//修改函数名
+function show_list(data)
+{
+	 var $body = $("#file-list");
+	 $body.empty();
+	 for( var i = 0; i < data.length;  i++ ){
+		 var $tr = $("<tr>");
+    	 $tr.append("<td>" + data[i].filename + "</td>");
+    	 $tr.append("<td>" + data[i].size + "</td>");
+    	 $tr.append("<td>" + data[i].date + "</td>");
+    	 if( data[i].state == 1 ){
+    		 $tr.append("<td>已加密</td>");
+        	 $tr.append("<td class='open-file' state='"+data[i].state+"'>解密</td>");
+			 //$tr.append("<td class='mp4tom3u8' url='"+data[i].url+"'>点播</td>");
+    	 }else if( data[i].state == 2 ){
+    		 $tr.append("<td>未加密</td>");
+        	 $tr.append("<td class='open-file' state='"+data[i].state+"'>加密</td>");
+			// $tr.append("<td class='mp4tom3u8' url='"+data[i].url+"'>点播</td>");
+    	 } else if(data[i].state ==  -1)
+    	 {
+    		 $tr.append("<td> 目录 </td>");
+    	 	 $tr.append("<td class='open-file' state='"+data[i].state+"'>进入</td>");
+			//$tr.append("<td class='mp4tom3u8' url='"+data[i].url+"'> </td>");
+    	 }
+    	 else if(data[i].state ==  3)
+    	 {
+    		 $tr.append("<td>未加密</td>");
+			 $tr.append("<td class='open-file' state='"+data[i].state+"'>加密</td>");
+			 //$tr.append("<td class='mp4tom3u8' url='"+data[i].url+"'>点播</td>");
+    	 }
+    	 else if(data[i].state ==  4)
+		{
+			 $tr.append("<td>已加密</td>");
+		   	 $tr.append("<td class='open-file' state='"+data[i].state+"'>解密</td>");
+			 //$tr.append("<td class='mp4tom3u8' url='"+data[i].url+"'>点播</td>");		 
+		}
+    	 else 
+		{
+			$tr.append("<td> </td>");
+			$tr.append("<td class='open-file' state='"+data[i].state+"'></td>");
+			//$tr.append("<td class='mp4tom3u8' url='"+data[i].url+"'> </td>");
+		}
+		
+		//全部都是点播
+		//$tr.append("<td class='mp4tom3u8' >播放</td>");
+		$tr.append("<td class='TbsVideoConvt' >播放</td>");		
+		$tr.append("<td class='mp4tom3u8temp' >播放</td>");	
+		$tr.append("<td class='DeleteTmp' >删除</td>");		
+		$tr.append("<td class='Dplayer' >弹幕</td>");
+		$tr.append("<td class='AddLogo' >添加水印</td>");	
+		$tr.append("<td class='videoaddlogo' >添加水印</td>");
+		$tr.append("<td class='cuttingvideo' >分割</td>");
+		$tr.append("<td class='mergevideo' >合并</td>");
+		$tr.append("<td class='imagecapture' >截屏</td>");
+		
+		$tr.append("<td class='upload' >测试up</td>");
+		
+		
+    	$body.append($tr);
+       	 //在html页面上显示文件个数
+     	 //$("#file-content").html(" 文件个数:" + data.length );
+	}
+	
+	$(".upload").on("click", function(){
+		 test_list(this);
+	});
+	
+	$(".imagecapture").on("click", function(){
+		 imagecapture(this);
+	});
+	 	  
+	 	  
+   	 $(".open-file").on("click", function(){
+	   		 open_file(this);
+   	});
+   		
+   				
+	 $(".TbsVideoConvt").on("click", function(){
+  		TbsVideoConvt(this);
+	});
+   		
+   		  		
+   	/*
+	//转换函数
+	$(".mp4tom3u8").on("click", function(){
+			 mp4tom3u8(this);
+	});
+	*/
+	
+	$(".DeleteTmp").on("click", function(){
+		DeleteTmp(this);
+	});
+	
+	$(".mp4tom3u8temp").on("click", function(){
+		mp4tom3u8temp(this);
+	});
+
+  	 $(".encode-dir").on("click", function(){
+	    encode_Dir();    	 
+    });
+  
+	 $(".decode-dir").on("click", function(){
+	  	decode_Dir();
+	});
+
+	$(".Dplayer").on("click", function(){
+  		dplayer(this);
+	});
+	
+	$(".AddLogo").on("click", function(){
+  		AddLogo(this);
+	});
+		
+ 	$(".videoaddlogo").on("click", function(){
+	   	videoaddlogo(this);
+   	});	
+   	
+   	$(".cuttingvideo").on("click", function(){
+	   	cuttingvideo(this);
+   	});	
+   	
+   	$(".mergevideo").on("click", function(){
+	   	mergevideo(this);
+   	});	  	
+}
+
+
+function test_list(data)
+{
+	var filepath = $("#file-path").val();
+	var filename = $(data).parent().find("td:eq(0)").html();
+		$.get("/upload.cgi",{
+   		 "method": "getFileList",
+   		 "filepath": filepath,
+       	 "filename": filename
+   	 	}, function ( data ){
+   	 	//	  alert("function ( data )");
+   			 show_list(data);
+		     }, "json");	
+}
+
+
+
+function imagecapture(data)
+{	
+	var filepath = $("#file-path").val();
+	var filename = $(data).parent().find("td:eq(0)").html();
+	//alert(time);
+	 $.get("/TbsAddLogo.cgi", {
+		 "method": "imagecapture",
+		 "filepath": filepath,
+		 "filename": filename,
+		 "flag":fileflag
+	 }, function(newdata) {
+			update_list( data, newdata);
+	 }, "json");  	
+}
+
+
+
+//切割视频
+function mergevideo(data)
+{
+	var filepath = $("#file-path").val();
+	var filename = $(data).parent().find("td:eq(0)").html();
+	var state = $(data).attr("state");
+	
+	 $.get("/TbsAddLogo.cgi", {
+		 "method": "mergevideo",
+		 "filepath": filepath,
+		 "filename": filename,
+		 "flag":fileflag
+	 }, function(newdata) {
+			update_list( data, newdata);
+	 }, "json");   	
+}
+
+
+
+//切割视频
+function cuttingvideo(data)
+{
+	var filepath = $("#file-path").val();
+	var filename = $(data).parent().find("td:eq(0)").html();
+	var state = $(data).attr("state");
+	 $.get("/TbsAddLogo.cgi", {
+		 "method": "cuttingvideo",
+		 "filepath": filepath,
+		 "filename": filename,
+		 "flag":fileflag
+	 }, function(newdata) {
+			update_list( data, newdata);
+	 }, "json");   	
+}
+
+
+//添加水印，调用程序
+function videoaddlogo(data)
+{
+	
+	var filepath = $("#file-path").val();
+	var filename = $(data).parent().find("td:eq(0)").html();
+	var state = $(data).attr("state");
+	 $.get("/TbsAddLogo.cgi", {
+		 "method": "addlogo",
+		 "filepath": filepath,
+		 "filename": filename,
+		 "flag":fileflag
+	 }, function(newdata) {
+			update_list( data, newdata);
+			dplayer(newdata);
+	 }, "json");   	
+
+}
+
+//MP4转换为ts视频片段
+function mp4tom3u8evon(data , newdata)
+{
+	//alert(data.url);
+	url = newdata.url;	
+	create();
+}
+
+
+//点播
+function TbsVideoConvt(data)
+{
+	var filepath = $("#file-path").val();
+	var filename = $(data).parent().find("td:eq(0)").html();
+	var state = $(data).attr("state");
+	//alert(filename);
+	 $.get("/TbsVideoConvt.cgi", {	 
+   	 "method": "videoconvt",
+       	 "filepath": filepath,
+       	 "filename": filename,
+       	 "flag":"0"
+        }, function(newdata) {
+    		//show_list(data);
+    		
+    		mp4tom3u8evon(data, newdata);   		
+    		update_list( data, newdata);
+	  	}, "json");
+}
+
+
+//转换函数mp4->m3u8 生成固定目录
+function mp4tom3u8(data)
+{
+	var filepath = $("#file-path").val();
+	var filename = $(data).parent().find("td:eq(0)").html();
+	var state = $(data).attr("state");
+ 	
+		//alert("EncodeFile");
+	 $.get("/TBSVideoDeal_cgi", {
+		 "method": "Mp4ToM3u8",
+		 "filepath": filepath,
+		 "filename": filename,
+		 "flag":"0"
+	 }, function(newdata) {
+	 		mp4tom3u8evon(data, newdata);
+			update_list( data, newdata);
+	 }, "json");   	
+	
+}
+
+//试看
+function mp4tom3u8temp(data)
+{
+	var filepath = $("#file-path").val();
+	var filename = $(data).parent().find("td:eq(0)").html();
+	var state = $(data).attr("state");
+	//alert(filename);
+	 $.get("/TbsVideoConvt.cgi", {	 
+   	 "method": "videoconvt",
+       	 "filepath": filepath,
+       	 "filename": filename,
+       	 "flag":"1"
+        }, function(newdata) {
+    		mp4tom3u8evon(data, newdata);   		
+    		update_list( data, newdata);
+	  	}, "json");	
+}
+
+
+/*
+//转换函数mp4->m3u8 生成临时文件
+function mp4tom3u8temp(data)
+{
+	var filepath = $("#file-path").val();
+	var filename = $(data).parent().find("td:eq(0)").html();
+	var state = $(data).attr("state");
+		//alert("EncodeFile");
+	 $.get("/TbsVideoConvt.cgi", {
+		 "method": "Mp4ToM3u8",
+		 "filepath": filepath,
+		 "filename": filename,
+		 "flag":"1"
+	 }, function(newdata) {
+	 		mp4tom3u8evon(data, newdata);
+			update_list( data, newdata);
+	 }, "json");   	
+}
+*/
+
+//删除临时文件
+function onStop(id)
+{	
+ 	$.get("/TbsVideoConvt.cgi", {
+		 "method": "DeleteTmp",
+		 "filepath": url,
+		 "filename": "",
+		 "flag":"1"
+	 }, function(newdata) {
+	 		
+	 }, "json"); 
+	 
+		
+}
+
+//用户来调用删除
+function DeleteTmp(data)
+{	
+	//获取后端返回的url 将后端返回的url,接收到后，通过
+	//首先调用生成临时文件
+	var filepath = $("#file-path").val();
+	var filename = $(data).parent().find("td:eq(0)").html();
+	
+ 	$.get("/TbsVideoConvt.cgi", {
+		 "method": "DeleteTmp",
+		 "filepath": url,
+		 "filename": filename,
+		 "flag":"1"
+	 }, function(newdata) {
+	 	onStop(id);
+	 }, "json"); 	
+}
+
+
+function open_file(data)
+{
+	var filepath = $("#file-path").val();
+	var filename = $(data).parent().find("td:eq(0)").html();
+	var state = $(data).attr("state");
+
+	 if ( state == 2 )  		
+	 {
+	 	 		//alert("EncodeFile");
+    		 $.get("/TBSVideoDeal_cgi", {
+        		 "method": "EncodeFile",
+            	 "filepath": filepath,
+            	 "filename": filename,
+            	 "flag":fileflag
+             }, function(newdata) {
+					update_list( data, newdata);
+             }, "json");   	
+	 }
+	 else  if( state == 1)
+	 {
+	 						//alert("DecodeFile");
+      	         $.get("/TBSVideoDeal_cgi", {
+        		 "method": "DecodeFile",
+            	 "filepath": filepath,
+            	 "filename": filename,
+            	 "flag":fileflag
+             }, function(newdata) {
+            	 update_list( data, newdata);
+             }, "json");
+	 }
+	 else if( state == -1)
+	{
+			 //进入目录后应该加载新的目录下的所有文件
+			 filepath = filepath+"/"+filename;
+	 		 $("#file-path").val(filepath);
+		
+			var $body = $("#file-list");
+			 $body.empty();
+			 load_file_list(filepath, "");
+	}
+}
+
+function update_list( data, newdata)
+{
+	var thisline = $(data);
+	var filename = $(data).parent().find("td:eq(0)").html();;
+	var newfile = newdata.newfile;
+	var newsize = newdata.size;
+	var newdate = newdata.date;
+  var newstate = newdata.state;       
+    
+	if( newstate == 1 )
+	{ 
+		 if (fileflag == 0)
+		{
+		 thisline.parent().find("td:eq(3)").html("已加密0");
+         thisline.parent().find("td:eq(4)").html("解密0");
+         thisline.parent().find("td:eq(4)").attr("state",  "1");
+		}
+	} 	 
+    else  if(newstate == 2)
+    {
+		 if (fileflag == 0)
+		{
+			 thisline.parent().find("td:eq(3)").html("未加密1");
+	         thisline.parent().find("td:eq(4)").html("加密1"); 
+	         thisline.parent().find("td:eq(4)").attr("state",  "2");
+		}
+     }
+     else if( newstate == 3 )
+   	 {
+    	 if (fileflag == 0)
+    	{
+   		    thisline.parent().find("td:eq(3)").html("未加密2");
+   			thisline.parent().find("td:eq(4)").html("加密2");
+   			thisline.parent().find("td:eq(4)").attr("state",  "2"); 		 
+    	}	
+     }
+     else  if( newstate == 4 )
+     { 
+    	 if (fileflag == 0)
+    	{
+			thisline.parent().find("td:eq(3)").html("已加密3");
+			thisline.parent().find("td:eq(4)").html("解密3");
+			thisline.parent().find("td:eq(4)").attr("state",  "1");	 
+    	}
+      } 
+     else
+	{
+		thisline.parent().find("td:eq(3)").html(" ");
+		thisline.parent().find("td:eq(4)").html(" ");   
+		thisline.parent().find("td:eq(4)").attr("state",  "0");
+	}
+	
+	//文件名查重
+	var $filestr = $("#file-list>tr:has(td:eq(0):contains('"+newfile+"'))");
+ 		
+    if($filestr.length<1)
+    {
+	     if(filename  !=  newfile)
+	   	  {
+			 	var $body = $("#file-list");
+		 		var $tr = $("<tr>");
+		 		
+		     	 $tr.append("<td>" + newfile + "</td>");
+		     	 $tr.append("<td>" + newsize + "</td>");
+		     	 $tr.append("<td>" + newdate + "</td>");
+		  		if (newstate == 1)
+				{
+	  			　$tr.append("<td>已加密</td>");
+	        	 	$tr.append("<td class='open-file' state='"+ newstate +"'>解密</td>");
+				}
+		  		else
+		  		{
+		     		$tr.append("<td>未加密</td>");
+	        	 	$tr.append("<td class='open-file' state='"+ newstate +"'>加密</td>");
+		  		}
+		  		
+	       		$body.append($tr);
+	   	  }
+    }
+ 	  $("#file-content").html( newdata["msg"] );
+	  //将msg转换为调用网页播放器
+	  
+  	 //$("#file-content").html(newdata["msg"]  + " 文件个数:" + int(data.length+1));
+  	 
+
+}
+   
+//递归加密
+function encode_Dir()
+{
+	var filepath = $("#file-path").val();
+
+	 $.get("/TBSVideoDeal_cgi", {	 
+   		 "method": "EncodeDir",
+       	 "filepath": filepath,
+       	 "filename": "",
+       	 "flag":fileflag
+        }, function(data) {
+    		//show_list(data);
+    		show_file_list();
+	  	}, "json");
+}   
+ 
+//递归解密
+function decode_Dir()
+{
+	var filepath = $("#file-path").val();
+
+	$.get("/TBSVideoDeal_cgi", {
+	 "method": "DecodeDir",
+	 "filepath": filepath,
+	 "filename": "",
+	 "flag":fileflag
+		} , function(data) {	 
+		//	show_list(data);	
+		show_file_list();
+		}, "json");	
+}
+
+//创建页面播放器
+function create()
+{  
+    //创建一个div  
+    var div = document.createElement("div");  
+    
+    //为div添加样式  
+    var style = document.createAttribute("style");  
+    div.setAttributeNode(style);  
+
+	var divattr = document.createAttribute("id");  
+    divattr.value = "player";  
+      
+    //把属性class = "test"添加到div  
+    div.setAttributeNode(divattr); 
+
+
+    div.style.width = " 600px";  
+    div.style.height = "400px";       
+    //把div追加到body  
+    document.getElementsByTagName("body").item(0).appendChild(div); 
+      
+			SewisePlayer.setup({
+				server: "vod",
+				type: "m3u8",
+				autostart: "true",
+				poster: "http://jackzhang1204.github.io/materials/poster.png",
+				videourl: url,
+		        skin: "vodWhite",
+		        title: "M3U8 AES 128",
+		        lang: "zh_CN",
+		        claritybutton: 'disable'
+		}, "player"); 	   
+}  
+
+//带有弹幕的播放器
+/*
+	添加一个接口，对视频添加缩略图，将视频处理之后，缩略图放到指定目录，
+	当用户点击播放带有缩略图的视频时，调用缩略图，调用视频url(m3u8)
+*/
+function dplayer(data)
+{
+		var dp = new DPlayer({
+		    container: document.getElementById('dplayer'),
+		    screenshot: true, //截屏
+		    video: 
+		    {		        
+		        //url: 'http://168.160.111.26/videotest.mp4',  //视频url
+		        url:data.url,
+		        type: 'auto',
+		        //pic: 'http://devtest.qiniudn.com/若能绽放光芒.png', //视频封面	
+		        pic: data.image,
+				//thumbnails: 'http://devtest.qiniudn.com/thumbnails.jpg'
+		        thumbnails: 'http://168.160.111.26/image/video.jpg'  //视频缩略图
+		        //thumbnails: 'thumbnails.jpg'		       
+		    },
+		    subtitle: 
+		    {
+		        url: 'webvtt.vtt' //
+		    },
+		    danmaku: 
+		    {
+		        id: 'demo',
+		        api: 'https://api.prprpr.me/dplayer/'
+		   	}
+		});
+}
+
+
+//视频添加logo，调用脚本
+function AddLogo(data)
+{
+	//获取后端返回的url 将后端返回的url,接收到后，通过
+	//首先调用生成临时文件
+	var filepath = $("#file-path").val();
+	var filename = $(data).parent().find("td:eq(0)").html();
+	
+ 	$.get("/TbsVideoConvt.cgi", {
+		 "method": "AddLogo",
+		 "filepath": filepath,
+		 "filename": filename,
+		 "flag":"1"
+	 }, function(newdata) {
+		 }, "json"); 		
+}
+
+
+     </script>
+</body>
+</html>

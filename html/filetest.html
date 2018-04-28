@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script src="http://e.tbs.com.cn:8280/js/jquery-2.0.3.min.js"></script>
+
+</head>
+<body>
+
+	<div id=“file-list-container”>
+		当前路径: <input name="path" type="text" id="file-path"
+			value="/home/tbs/TBSNative/test/"> <input type="button"
+			id="show-file" value="显示" onclick="show_file_list();"><br>
+
+		文件选项: <input name="flag" type="text" id="file-flag" value="0">
+		<hr>
+
+		<div>
+			<div class='encode-dir'>加密全部文件</div>
+			<div class='decode-dir'>解密全部文件</div>
+			<table border="1">
+				<tr>
+					<td>文件名</td>
+					<td>文件大小</td>
+					<td>修改日期</td>
+					<td>加密状态</td>
+					<td>操作</td>
+				</tr>
+				<tbody id="file-list"></tbody>
+			</table>
+		</div>
+		<div id="file-content" style="margin-top: 25px;"></div>
+	</div>
+
+	<script>
+  
+  //取元素中的值
+	 var filepath = $("#file-path").val();
+	 var fileflag = $("#file-flag").val();
+	 load_file_list(filepath, "");
+
+function show_file_list()
+{
+		 var filepath = $("#file-path").val();
+		// alert("filepath =" + filepath);
+ 		 load_file_list( filepath, "" );
+}
+
+function load_file_list( filepath, filename )
+{
+		$.get("/TBSVideoDeal_cgi",{
+   		 "method": "getFileList",
+   		 "filepath": filepath,
+       "filename": filename
+   	 	}, function ( data ){
+   	 	//	  alert("function ( data )");
+   			 show_list(data);
+		     }, "json");
+}
+
+//修改函数名
+function show_list(data)
+{
+	 var $body = $("#file-list");
+	 $body.empty();
+	 for( var i = 0; i < data.length;  i++ ){
+		 var $tr = $("<tr>");
+    	 $tr.append("<td>" + data[i].filename + "</td>");
+    	 $tr.append("<td>" + data[i].size + "</td>");
+    	 $tr.append("<td>" + data[i].date + "</td>");
+    	 if( data[i].state == 1 ){
+    		 $tr.append("<td>已加密</td>");
+        	 $tr.append("<td class='open-file' state='"+data[i].state+"'>解密</td>");
+    	 }else if( data[i].state == 2 ){
+    		 $tr.append("<td>未加密</td>");
+        	 $tr.append("<td class='open-file' state='"+data[i].state+"'>加密</td>");
+    	 } else if(data[i].state ==  -1)
+    	 {
+    		 $tr.append("<td> 目录 </td>");
+    	 	 $tr.append("<td class='open-file' state='"+data[i].state+"'>进入 </td>");
+    	 }
+    	 else if(data[i].state ==  3)
+    	 {
+    		 $tr.append("<td>未加密</td>");
+         $tr.append("<td class='open-file' state='"+data[i].state+"'>加密</td>");
+    	 }
+    	 else if(data[i].state ==  4)
+		{
+			 $tr.append("<td>已加密</td>");
+		   	 $tr.append("<td class='open-file' state='"+data[i].state+"'>解密</td>");	 
+		}
+    	 else 
+		{
+			$tr.append("<td> </td>");
+			$tr.append("<td class='open-file' state='"+data[i].state+"'></td>");
+		}
+    	 $body.append($tr);
+       	 //在html页面上显示文件个数
+     	 $("#file-content").html(" 文件个数:" + data.length );
+	}
+	 
+	 
+   	 $(".open-file").on("click", function(){
+	   		 open_file(this);
+   		});
+
+  	 $(".encode-dir").on("click", function(){
+	    	 encode_Dir();    	 
+    	});
+  
+	 $(".decode-dir").on("click", function(){
+	  		decode_Dir();
+		});
+}
+
+function open_file(data)
+{
+	var filepath = $("#file-path").val();
+	var filename = $(data).parent().find("td:eq(0)").html();
+	var state = $(data).attr("state");
+
+	 if ( state == 2 )  		
+	 {
+	 	 		//alert("EncodeFile");
+    		 $.get("/TBSVideoDeal_cgi", {
+        		 "method": "EncodeFile",
+            	 "filepath": filepath,
+            	 "filename": filename,
+            	 "flag":fileflag
+             }, function(newdata) {
+					update_list( data, newdata);
+             }, "json");   	
+	 }
+	 else  if( state == 1)
+	 {
+	 						//alert("DecodeFile");
+      	         $.get("/TBSVideoDeal_cgi", {
+        		 "method": "DecodeFile",
+            	 "filepath": filepath,
+            	 "filename": filename,
+            	 "flag":fileflag
+             }, function(newdata) {
+            	 update_list( data, newdata);
+             }, "json");
+	 }
+	 else if( state == -1)
+	{
+			 //进入目录后应该加载新的目录下的所有文件
+			 filepath = filepath+"/"+filename;
+	 		 $("#file-path").val(filepath);
+		
+			var $body = $("#file-list");
+			 $body.empty();
+			 load_file_list(filepath, "");
+	}
+}
+
+function update_list( data, newdata)
+{
+	var thisline = $(data);
+	var filename = $(data).parent().find("td:eq(0)").html();;
+	var newfile = newdata.newfile;
+	var newsize = newdata.size;
+	var newdate = newdata.date;
+  var newstate = newdata.state;       
+    
+	if( newstate == 1 )
+	{ 
+		 if (fileflag == 0)
+		{
+		 thisline.parent().find("td:eq(3)").html("已加密0");
+         thisline.parent().find("td:eq(4)").html("解密0");
+         thisline.parent().find("td:eq(4)").attr("state",  "1");
+		}
+	} 	 
+    else  if(newstate == 2)
+    {
+		 if (fileflag == 0)
+		{
+			 thisline.parent().find("td:eq(3)").html("未加密1");
+	         thisline.parent().find("td:eq(4)").html("加密1"); 
+	         thisline.parent().find("td:eq(4)").attr("state",  "2");
+		}
+     }
+     else if( newstate == 3 )
+   	 {
+    	 if (fileflag == 0)
+    	{
+   		    thisline.parent().find("td:eq(3)").html("未加密2");
+   			thisline.parent().find("td:eq(4)").html("加密2");
+   			thisline.parent().find("td:eq(4)").attr("state",  "2"); 		 
+    	}	
+     }
+     else  if( newstate == 4 )
+     { 
+    	 if (fileflag == 0)
+    	{
+			thisline.parent().find("td:eq(3)").html("已加密3");
+			thisline.parent().find("td:eq(4)").html("解密3");
+			thisline.parent().find("td:eq(4)").attr("state",  "1");	 
+    	}
+      } 
+     else
+	{
+		thisline.parent().find("td:eq(3)").html(" ");
+		thisline.parent().find("td:eq(4)").html(" ");   
+		thisline.parent().find("td:eq(4)").attr("state",  "0");
+	}
+	
+	//文件名查重
+	var $filestr = $("#file-list>tr:has(td:eq(0):contains('"+newfile+"'))");
+ 		
+    if($filestr.length<1)
+    {
+	     if(filename  !=  newfile)
+	   	  {
+			 	var $body = $("#file-list");
+		 		var $tr = $("<tr>");
+		 		
+		     	 $tr.append("<td>" + newfile + "</td>");
+		     	 $tr.append("<td>" + newsize + "</td>");
+		     	 $tr.append("<td>" + newdate + "</td>");
+		  		if (newstate == 1)
+				{
+	  			　$tr.append("<td>已加密</td>");
+	        	 	$tr.append("<td class='open-file' state='"+ newstate +"'>解密</td>");
+				}
+		  		else
+		  		{
+		     		$tr.append("<td>未加密</td>");
+	        	 	$tr.append("<td class='open-file' state='"+ newstate +"'>加密</td>");
+		  		}
+		  		
+	       		$body.append($tr);
+	   	  }
+    }
+ 	  $("#file-content").html( newdata["msg"] );
+  	 //$("#file-content").html(newdata["msg"]  + " 文件个数:" + int(data.length+1));
+  	 
+
+}
+   
+function encode_Dir()
+{
+	var filepath = $("#file-path").val();
+
+	 $.get("/TBSVideoDeal_cgi", {	 
+   		 "method": "EncodeDir",
+       	 "filepath": filepath,
+       	 "filename": "",
+       	 "flag":fileflag
+        }, function(data) {
+    		//show_list(data);
+    		show_file_list();
+	  	}, "json");
+}    
+
+function decode_Dir()
+{
+	var filepath = $("#file-path").val();
+
+	$.get("/TBSVideoDeal_cgi", {
+	 "method": "DecodeDir",
+	 "filepath": filepath,
+	 "filename": "",
+	 "flag":fileflag
+		} , function(data) {	 
+		//	show_list(data);	
+		show_file_list();
+		}, "json");	
+}
+     </script>
+</body>
+</html>

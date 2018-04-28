@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+   <link rel="stylesheet" href="DPlayer.min.css">
+   <div id="dplayer"></div>
+   <script src="https://unpkg.com/hls.js/dist/hls.min.js"></script>
+   <script src="DPlayer.min.js"></script>
+   
+</head>
+
+<body class="markdown-body">
+    
+
+
+ <script>
+/*
+var dp = new DPlayer({
+    container: document.getElementById('dplayer'),
+    video: {
+        url: 'http://168.160.111.26/hls/keep/videotest/videotest.m3u8',
+        type: 'hls'
+    }
+});
+
+
+// Another way, init HLS outside
+var dp = new DPlayer({
+    container: document.getElementById('dplayer')
+});
+var hls = new Hls();
+hls.loadSource('http://168.160.111.26/hls/keep/videotest/videotest.m3u8');
+hls.attachMedia(dp.video);
+*/
+
+	
+/*
+视频缩略图是在DPlayer.min.js中默认固定值的为160*90，
+所以如果视频缩略图每一镜不符合这个标准，缩略图显示会杂乱
+
+
+*/
+
+
+var dp = new DPlayer({
+    container: document.getElementById('dplayer'),
+    //screenshot: true,
+    video: {
+        //url: 'http://168.160.111.26/videotest.mp4',
+	url: 'http://e.tbs.com.cn:1936/hls/live100041/index.m3u8',
+        //pic: 'http://devtest.qiniudn.com/若能绽放光芒.png', //视频封面
+		type: 'hls',
+		thumbnails: 'http://devtest.qiniudn.com/thumbnails.jpg'
+        //thumbnails: 'http://168.160.111.26/image/video.jpg'
+        //thumbnails: 'thumbnails.jpg'
+    },
+    subtitle: {
+        url: 'webvtt.vtt'
+    },
+    danmaku: {
+        id: 'demo',
+        api: 'https://api.prprpr.me/dplayer/'
+    }
+});
+
+
+</script>
+</body>
+
+</html>
